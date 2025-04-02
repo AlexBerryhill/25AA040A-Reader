@@ -11,8 +11,8 @@
  #define MOSI_PIN 11
  #define SCK_PIN 12
  #define MISO_PIN 13
- #define WP_PIN 9
- #define HOLD_PIN 8
+ #define WP_PIN 14
+ #define HOLD_PIN 48
  
  #define EEPROM_READ  0x03
  #define EEPROM_WRITE 0x02
@@ -32,6 +32,8 @@
      Serial.begin(115200);
      SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN, CS_PIN);
      pinMode(CS_PIN, OUTPUT);
+     pinMode(HOLD_PIN, OUTPUT);
+     pinMode(WP_PIN, OUTPUT);
      digitalWrite(CS_PIN, HIGH);
      digitalWrite(HOLD_PIN, HIGH);
      digitalWrite(WP_PIN, LOW);
@@ -39,9 +41,9 @@
      delay(1000);
      Serial.println("EEPROM Reader/Writer");
      
-     digitalWrite(WP_PIN, HIGH);
-     eepromWriteString(0x0A9, "Configure it as an input and read the HAL_GPIO_ReadPin, but I prefer HAL_GPIO_EXTI_Callback using interrupts."); // 108 bytes
-     digitalWrite(WP_PIN, LOW);
+    //  digitalWrite(WP_PIN, HIGH);
+    //  eepromWriteString(0x0A9, "Configure it as an input and read the HAL_GPIO_ReadPin, but I prefer HAL_GPIO_EXTI_Callback using interrupts."); // 108 bytes
+    //  digitalWrite(WP_PIN, LOW);
  }
  
  void loop() {
@@ -104,12 +106,12 @@
  
  uint8_t eepromRead(uint16_t addr) {
      digitalWrite(CS_PIN, LOW);
-     delay(1);
+     delay(0.1);
      SPI.transfer(EEPROM_READ | ((addr >> 8) & 0x01));
      SPI.transfer((uint8_t)(addr & 0xFF));
      uint8_t data = SPI.transfer(0x00);
      digitalWrite(CS_PIN, HIGH);
-     delay(1);
+     delay(0.1);
      return data;
  }
  
@@ -118,17 +120,15 @@
      char eepromData[513]; // 512 bytes + null terminator
      memset(eepromData, 0, sizeof(eepromData));
      
-     digitalWrite(CS_PIN, LOW);
-     SPI.transfer(EEPROM_READ);
-     SPI.transfer(0x00);
+    //  digitalWrite(CS_PIN, LOW);
      for (uint16_t addr = 0; addr < 0x200; addr++) {
-         uint8_t data = SPI.transfer(0xFF);
+         uint8_t data = eepromRead(addr);
          eepromData[addr] = data ? (char)data : ' ';
      }
-     digitalWrite(CS_PIN, HIGH);
+    //  digitalWrite(CS_PIN, HIGH);
 
     //  eepromWriteString(0x1F4, "ID:ES321-326");
-    eepromWriteString(0x0A9, "Configure it as an input and read the HAL_GPIO_ReadPin, but I prefer HAL_GPIO_EXTI_Callback using interrupts."); // 108 bytes
+    // eepromWriteString(0x0A9, "Configure it as an input and read the HAL_GPIO_ReadPin, but I prefer HAL_GPIO_EXTI_Callback using interrupts."); // 108 bytes
 
      
      Serial.println("EEPROM Content:");
